@@ -1,0 +1,229 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17DtVwk6ZRoHmYUTECSiIyMXSsWqEJ0tRxz9T8aAlvyE",
+          "mode": "list",
+          "cachedResultName": "DATA student",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17DtVwk6ZRoHmYUTECSiIyMXSsWqEJ0tRxz9T8aAlvyE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17DtVwk6ZRoHmYUTECSiIyMXSsWqEJ0tRxz9T8aAlvyE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -304,
+        -16
+      ],
+      "id": "26ba9518-2505-4bd8-a2bc-24b3aeb510f4",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Evz9d9PLzkUnq8HG",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e8106f60-7d55-4562-a1ac-70ae3555111b",
+              "leftValue": "={{ $json.SCORE }}",
+              "rightValue": 65,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        32,
+        -16
+      ],
+      "id": "919f455e-1d2a-4aee-8275-027fd2508659",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a helpful AI Learning Mentor. A student named {{ $json.NAME }} scored low in {{ $json.EXAM }}. Generate a friendly, encouraging WhatsApp message to motivate them and explain the topic simply.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        320,
+        -16
+      ],
+      "id": "8b5cd066-9c53-4186-8553-9a9782f751e2",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        192
+      ],
+      "id": "0449265d-d53c-4ef5-9b4d-4a27501230e0",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Get row(s) in sheet').item.json.EMAIL }}",
+        "subject": "AI MENTOR",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        -16
+      ],
+      "id": "48628191-ee08-423c-adf4-96ca802c0e64",
+      "name": "Send a message",
+      "webhookId": "cc9bc47d-07e1-460c-af88-52acc64bb39c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "NoB9mVpZgq6WpUZB",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 17,
+              "triggerAtMinute": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -512,
+        -16
+      ],
+      "id": "d42cf4b0-82b0-4e42-ba54-5d648d30feba",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "367dc27b-46ca-42d1-9964-2fdd01fcb237",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "02254e4ef70ab47e75450925779ca41c4664ebb1891440a358c40051363428e3"
+  },
+  "nodeGroups": [],
+  "id": "b67fKYB0y0ivrrzW",
+  "tags": []
+}
